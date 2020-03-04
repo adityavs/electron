@@ -1,13 +1,26 @@
 # Application Distribution
 
-To distribute your app with Electron, the folder containing your app should be
-named `app` and placed under Electron's resources directory (on OS X it is
-`Electron.app/Contents/Resources/` and on Linux and Windows it is `resources/`),
-like this:
+To distribute your app with Electron, you need to package and rebrand it. The easiest way to do this is to use one of the following third party packaging tools:
 
-On OS X:
+* [electron-forge](https://github.com/electron-userland/electron-forge)
+* [electron-builder](https://github.com/electron-userland/electron-builder)
+* [electron-packager](https://github.com/electron/electron-packager)
 
-```text
+These tools will take care of all the steps you need to take to end up with a distributable Electron applications, such as packaging your application, rebranding the executable, setting the right icons and optionally creating installers.
+
+## Manual distribution
+You can also choose to manually get your app ready for distribution. The steps needed to do this are outlined below.
+
+To distribute your app with Electron, you need to download Electron's [prebuilt
+binaries](https://github.com/electron/electron/releases). Next, the folder
+containing your app should be named `app` and placed in Electron's resources
+directory as shown in the following examples. Note that the location of
+Electron's prebuilt binaries is indicated with `electron/` in the examples
+below.
+
+On macOS:
+
+```plaintext
 electron/Electron.app/Contents/Resources/app/
 ├── package.json
 ├── main.js
@@ -16,7 +29,7 @@ electron/Electron.app/Contents/Resources/app/
 
 On Windows and Linux:
 
-```text
+```plaintext
 electron/resources/app
 ├── package.json
 ├── main.js
@@ -37,16 +50,16 @@ To use an `asar` archive to replace the `app` folder, you need to rename the
 archive to `app.asar`, and put it under Electron's resources directory like
 below, and Electron will then try to read the archive and start from it.
 
-On OS X:
+On macOS:
 
-```text
+```plaintext
 electron/Electron.app/Contents/Resources/
 └── app.asar
 ```
 
 On Windows and Linux:
 
-```text
+```plaintext
 electron/resources/
 └── app.asar
 ```
@@ -63,10 +76,10 @@ before distributing it to users.
 You can rename `electron.exe` to any name you like, and edit its icon and other
 information with tools like [rcedit](https://github.com/atom/rcedit).
 
-### OS X
+### macOS
 
 You can rename `Electron.app` to any name you want, and you also have to rename
-the `CFBundleDisplayName`, `CFBundleIdentifier` and `CFBundleName` fields in
+the `CFBundleDisplayName`, `CFBundleIdentifier` and `CFBundleName` fields in the
 following files:
 
 * `Electron.app/Contents/Info.plist`
@@ -78,20 +91,12 @@ file's name.
 
 The structure of a renamed app would be like:
 
-```
+```plaintext
 MyApp.app/Contents
 ├── Info.plist
 ├── MacOS/
 │   └── MyApp
 └── Frameworks/
-    ├── MyApp Helper EH.app
-    |   ├── Info.plist
-    |   └── MacOS/
-    |       └── MyApp Helper EH
-    ├── MyApp Helper NP.app
-    |   ├── Info.plist
-    |   └── MacOS/
-    |       └── MyApp Helper NP
     └── MyApp Helper.app
         ├── Info.plist
         └── MacOS/
@@ -102,35 +107,18 @@ MyApp.app/Contents
 
 You can rename the `electron` executable to any name you like.
 
-## Packaging Tools
-
-Apart from packaging your app manually, you can also choose to use third party
-packaging tools to do the work for you:
-
-* [electron-packager](https://github.com/maxogden/electron-packager)
-* [electron-builder](https://github.com/loopline-systems/electron-builder)
-
 ## Rebranding by Rebuilding Electron from Source
 
 It is also possible to rebrand Electron by changing the product name and
-building it from source. To do this you need to modify the `atom.gyp` file and
-have a clean rebuild.
-
-### grunt-build-atom-shell
-
-Manually checking out Electron's code and rebuilding could be complicated, so
-a Grunt task has been created that will handle this automatically:
-[grunt-build-atom-shell](https://github.com/paulcbetts/grunt-build-atom-shell).
-
-This task will automatically handle editing the `.gyp` file, building from
-source, then rebuilding your app's native Node modules to match the new
-executable name.
+building it from source. To do this you need to set the build argument
+corresponding to the product name (`electron_product_name = "YourProductName"`)
+in the `args.gn` file and rebuild.
 
 ### Creating a Custom Electron Fork
 
 Creating a custom fork of Electron is almost certainly not something you will
 need to do in order to build your app, even for "Production Level" applications.
-Using a tool such as `electron-packager` or `electron-builder` will allow you to
+Using a tool such as `electron-packager` or `electron-forge` will allow you to
 "Rebrand" Electron without having to do these steps.
 
 You need to fork Electron when you have custom C++ code that you have patched
@@ -147,24 +135,24 @@ we appreciate your help.
 
 2. Create a new S3 bucket and create the following empty directory structure:
 
-```
-- atom-shell/
-  - symbols/
-  - dist/
-```
+    ```sh
+    - electron/
+      - symbols/
+      - dist/
+    ```
 
 3. Set the following Environment Variables:
 
   * `ELECTRON_GITHUB_TOKEN` - a token that can create releases on GitHub
   * `ELECTRON_S3_ACCESS_KEY`, `ELECTRON_S3_BUCKET`, `ELECTRON_S3_SECRET_KEY` -
-    the place where you'll upload node.js headers as well as symbols
+    the place where you'll upload Node.js headers as well as symbols
   * `ELECTRON_RELEASE` - Set to `true` and the upload part will run, leave unset
-    and `surf-build` will just do CI-type checks, appropriate to run for every
+    and `surf-build` will do CI-type checks, appropriate to run for every
     pull request.
   * `CI` - Set to `true` or else it will fail
   * `GITHUB_TOKEN` - set it to the same as `ELECTRON_GITHUB_TOKEN`
   * `SURF_TEMP` - set to `C:\Temp` on Windows to prevent path too long issues
-  * `TARGET_ARCH` - set to `ia32` or `x64`  
+  * `TARGET_ARCH` - set to `ia32` or `x64`
 
 4. In `script/upload.py`, you _must_ set `ELECTRON_REPO` to your fork (`MYORG/electron`),
   especially if you are a contributor to Electron proper.

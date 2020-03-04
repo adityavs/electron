@@ -5,7 +5,12 @@ path names on Windows, slightly speed up `require` and conceal your source code
 from cursory inspection, you can choose to package your app into an [asar][asar]
 archive with little changes to your source code.
 
-## Generating `asar` Archive
+Most users will get this feature for free, since it's supported out of the box
+by [`electron-packager`][electron-packager], [`electron-forge`][electron-forge],
+and [`electron-builder`][electron-builder]. If you are not using any of these
+tools, read on.
+
+## Generating `asar` Archives
 
 An [asar][asar] archive is a simple tar-like format that concatenates files
 into a single file. Electron can read arbitrary files from it without unpacking
@@ -15,13 +20,13 @@ Steps to package your app into an `asar` archive:
 
 ### 1. Install the asar Utility
 
-```bash
+```sh
 $ npm install -g asar
 ```
 
 ### 2. Package with `asar pack`
 
-```bash
+```sh
 $ asar pack your-app app.asar
 ```
 
@@ -38,7 +43,7 @@ files in the filesystem.
 
 For example, suppose we have an `example.asar` archive under `/path/to`:
 
-```bash
+```sh
 $ asar list /path/to/example.asar
 /app.js
 /file.txt
@@ -51,29 +56,30 @@ $ asar list /path/to/example.asar
 Read a file in the `asar` archive:
 
 ```javascript
-const fs = require('fs');
-fs.readFileSync('/path/to/example.asar/file.txt');
+const fs = require('fs')
+fs.readFileSync('/path/to/example.asar/file.txt')
 ```
 
 List all files under the root of the archive:
 
 ```javascript
-const fs = require('fs');
-fs.readdirSync('/path/to/example.asar');
+const fs = require('fs')
+fs.readdirSync('/path/to/example.asar')
 ```
 
 Use a module from the archive:
 
 ```javascript
-require('/path/to/example.asar/dir/module.js');
+require('/path/to/example.asar/dir/module.js')
 ```
 
 You can also display a web page in an `asar` archive with `BrowserWindow`:
 
 ```javascript
-const {BrowserWindow} = require('electron');
-let win = new BrowserWindow({width: 800, height: 600});
-win.loadURL('file:///path/to/example.asar/static/index.html');
+const { BrowserWindow } = require('electron')
+const win = new BrowserWindow()
+
+win.loadURL('file:///path/to/example.asar/static/index.html')
 ```
 
 ### Web API
@@ -85,33 +91,34 @@ For example, to get a file with `$.get`:
 
 ```html
 <script>
-let $ = require('./jquery.min.js');
+let $ = require('./jquery.min.js')
 $.get('file:///path/to/example.asar/file.txt', (data) => {
-  console.log(data);
-});
+  console.log(data)
+})
 </script>
 ```
 
 ### Treating an `asar` Archive as a Normal File
 
 For some cases like verifying the `asar` archive's checksum, we need to read the
-content of `asar` archive as file. For this purpose you can use the built-in
+content of an `asar` archive as a file. For this purpose you can use the built-in
 `original-fs` module which provides original `fs` APIs without `asar` support:
 
 ```javascript
-const originalFs = require('original-fs');
-originalFs.readFileSync('/path/to/example.asar');
+const originalFs = require('original-fs')
+originalFs.readFileSync('/path/to/example.asar')
 ```
 
 You can also set `process.noAsar` to `true` to disable the support for `asar` in
 the `fs` module:
 
 ```javascript
-process.noAsar = true;
-fs.readFileSync('/path/to/example.asar');
+const fs = require('fs')
+process.noAsar = true
+fs.readFileSync('/path/to/example.asar')
 ```
 
-## Limitations on Node API
+## Limitations of the Node API
 
 Even though we tried hard to make `asar` archives in the Node API work like
 directories as much as possible, there are still limitations due to the
@@ -163,22 +170,26 @@ and `command`s are executed under shell. There is no reliable way to determine
 whether a command uses a file in asar archive, and even if we do, we can not be
 sure whether we can replace the path in command without side effects.
 
-## Adding Unpacked Files in `asar` Archive
+## Adding Unpacked Files to `asar` Archives
 
-As stated above, some Node APIs will unpack the file to filesystem when
-calling, apart from the performance issues, it could also lead to false alerts
-of virus scanners.
+As stated above, some Node APIs will unpack the file to the filesystem when
+called. Apart from the performance issues, various anti-virus scanners might
+be triggered by this behavior.
 
-To work around this, you can unpack some files creating archives by using the
-`--unpack` option, an example of excluding shared libraries of native modules
-is:
+As a workaround, you can leave various files unpacked using the `--unpack` option.
+In the following example, shared libraries of native Node.js modules will not be
+packed:
 
-```bash
+```sh
 $ asar pack app app.asar --unpack *.node
 ```
 
-After running the command, apart from the `app.asar`, there is also an
-`app.asar.unpacked` folder generated which contains the unpacked files, you
-should copy it together with `app.asar` when shipping it to users.
+After running the command, you will notice that a folder named `app.asar.unpacked`
+was created together with the `app.asar` file. It contains the unpacked files
+and should be shipped together with the `app.asar` archive.
 
 [asar]: https://github.com/electron/asar
+[electron-packager]: https://github.com/electron/electron-packager
+[electron-forge]: https://github.com/electron-userland/electron-forge
+[electron-builder]: https://github.com/electron-userland/electron-builder
+

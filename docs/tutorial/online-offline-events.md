@@ -1,21 +1,24 @@
 # Online/Offline Event Detection
 
-Online and offline event detection can be implemented in the renderer process
-using standard HTML5 APIs, as shown in the following example.
+[Online and offline event](https://developer.mozilla.org/en-US/docs/Online_and_offline_events) detection can be implemented in the renderer process using the [`navigator.onLine`](http://html5index.org/Offline%20-%20NavigatorOnLine.html) attribute, part of standard HTML5 API.
+The `navigator.onLine` attribute returns `false` if any network requests are guaranteed to fail i.e. definitely offline (disconnected from the network). It returns `true` in all other cases.
+Since all other conditions return `true`, one has to be mindful of getting false positives, as we cannot assume `true` value necessarily means that Electron can access the internet. Such as in cases where the computer is running a virtualization software that has virtual ethernet adapters that are always “connected.”
+Therefore, if you really want to determine the internet access status of Electron,
+you should develop additional means for checking.
+
+Example:
 
 _main.js_
 
 ```javascript
-const electron = require('electron');
-const app = electron.app;
-const BrowserWindow = electron.BrowserWindow;
+const { app, BrowserWindow } = require('electron')
 
-let onlineStatusWindow;
+let onlineStatusWindow
 
-app.on('ready', () => {
-  onlineStatusWindow = new BrowserWindow({ width: 0, height: 0, show: false });
-  onlineStatusWindow.loadURL(`file://${__dirname}/online-status.html`);
-});
+app.whenReady().then(() => {
+  onlineStatusWindow = new BrowserWindow({ width: 0, height: 0, show: false })
+  onlineStatusWindow.loadURL(`file://${__dirname}/online-status.html`)
+})
 ```
 
 _online-status.html_
@@ -26,13 +29,13 @@ _online-status.html_
 <body>
 <script>
   const alertOnlineStatus = () => {
-    window.alert(navigator.onLine ? 'online' : 'offline');
-  };
+    window.alert(navigator.onLine ? 'online' : 'offline')
+  }
 
-  window.addEventListener('online',  alertOnlineStatus);
-  window.addEventListener('offline',  alertOnlineStatus);
+  window.addEventListener('online',  alertOnlineStatus)
+  window.addEventListener('offline',  alertOnlineStatus)
 
-  alertOnlineStatus();
+  alertOnlineStatus()
 </script>
 </body>
 </html>
@@ -47,21 +50,17 @@ to the main process and handled as needed, as shown in the following example.
 _main.js_
 
 ```javascript
-const electron = require('electron');
-const app = electron.app;
-const ipcMain = electron.ipcMain;
-const BrowserWindow = electron.BrowserWindow;
+const { app, BrowserWindow, ipcMain } = require('electron')
+let onlineStatusWindow
 
-let onlineStatusWindow;
-
-app.on('ready', () => {
-  onlineStatusWindow = new BrowserWindow({ width: 0, height: 0, show: false });
-  onlineStatusWindow.loadURL(`file://${__dirname}/online-status.html`);
-});
+app.whenReady().then(() => {
+  onlineStatusWindow = new BrowserWindow({ width: 0, height: 0, show: false, webPreferences: { nodeIntegration: true } })
+  onlineStatusWindow.loadURL(`file://${__dirname}/online-status.html`)
+})
 
 ipcMain.on('online-status-changed', (event, status) => {
-  console.log(status);
-});
+  console.log(status)
+})
 ```
 
 _online-status.html_
@@ -71,15 +70,15 @@ _online-status.html_
 <html>
 <body>
 <script>
-  const {ipcRenderer} = require('electron');
+  const { ipcRenderer } = require('electron')
   const updateOnlineStatus = () => {
-    ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline');
-  };
+    ipcRenderer.send('online-status-changed', navigator.onLine ? 'online' : 'offline')
+  }
 
-  window.addEventListener('online',  updateOnlineStatus);
-  window.addEventListener('offline',  updateOnlineStatus);
+  window.addEventListener('online',  updateOnlineStatus)
+  window.addEventListener('offline',  updateOnlineStatus)
 
-  updateOnlineStatus();
+  updateOnlineStatus()
 </script>
 </body>
 </html>
